@@ -3,8 +3,30 @@ provider "aws" {
   region = "ap-south-1"
 }
 
+  resource "aws_instance" "my_ec2" {
+  ami           = "ami-05d2d839d4f73aafb"
+  instance_type = "t3.small"
+
+  key_name = "jenkin"
+
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
+
+
+    user_data = <<-EOF
+              #!/bin/bash
+              apt update -y
+              apt install nginx -y
+              systemctl start nginx
+              systemctl enable nginx
+              EOF
+
+  tags = {
+    Name = "webweb"
+  }
+}
 resource "aws_security_group" "web_sg" {
   name_prefix = "web_sg_"
+  description = "Allow SSH and HTTP"
 
   ingress {
     from_port   = 22
@@ -27,28 +49,6 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
-
-resource "aws_instance" "bharu" {
-  ami           = "ami-05d2d839d4f73aafb"
-  instance_type = "t3.micro"
-
-  key_name = "jenkin"
-
-  vpc_security_group_ids = [aws_security_group.web_sg.id]
-
-  user_data = <<-EOF
-              #!/bin/bash
-              apt-get update -y
-              apt-get install nginx -y
-              systemctl start nginx
-              systemctl enable nginx
-              EOF
-
-  tags = {
-    Name = "mywebsite"   # 🔥 NEW INSTANCE EVERY TIME
-  }
-}
-
 output "public_ip" {
-  value = aws_instance.bharu.public_ip
+  value = aws_instance.my_ec2.public_ip
 }
